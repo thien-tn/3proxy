@@ -7,7 +7,7 @@ cd 3proxy-${version}
 make -f Makefile.Linux
 cd src
 mkdir /etc/3proxy/
-mv 3proxy /etc/3proxy/
+mv ../bin/3proxy /etc/3proxy/
 cd /etc/3proxy/
 wget --no-check-certificate https://github.com/thien-tn/3proxy/raw/master/3proxy.cfg
 chmod 600 /etc/3proxy/3proxy.cfg
