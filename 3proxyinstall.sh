@@ -55,9 +55,9 @@ cat <<EOT > /usr/local/bin/menu
 while true; do
     echo ""
     echo "Chọn một tùy chọn từ menu:"
-    echo "1. Xem danh sách user hiện tại"
-    echo "2. Thêm 1 user mới"
-    echo "3. Thêm ngẫu nhiên nhiều user"
+    echo "1. Xem danh sách proxy hiện tại"
+    echo "2. Thêm 1 proxy mới"
+    echo "3. Thêm ngẫu nhiên nhiều proxy"
     echo "4. Xóa 1 user"
     echo "5. Xóa toàn bộ user"
     echo "6. Cài đặt lại 3proxy server"
@@ -69,8 +69,8 @@ while true; do
     
     case \$choice in
         1)
-            echo "Danh sách user hiện tại:"
-            cat /etc/3proxy/.proxyauth
+            echo "Danh sách proxy hiện tại:"
+            output_proxy_list
             ;;
         2)
             read -p "Nhập tên user mới: " user
@@ -78,6 +78,7 @@ while true; do
             echo "Thêm user \$user"
             # Lệnh thêm user theo format Username:CL:Password
             echo "\$user:CL:\$password" >> /etc/3proxy/.proxyauth
+	    output_proxy_list
             ;;
         3)
             read -p "Số lượng user muốn thêm ngẫu nhiên: " num
@@ -94,15 +95,18 @@ while true; do
                 # Lưu user và password theo format Username:CL:Password
                 echo "\$user:CL:\$password" >> /etc/3proxy/.proxyauth
             done
+	    output_proxy_list
             ;;
         4)
             read -p "Nhập tên user cần xóa: " user
             echo "Xóa user \$user"
             sed -i "/^\$user:/d" /etc/3proxy/.proxyauth
+	    output_proxy_list
             ;;
         5)
             echo "Xóa toàn bộ user"
             > /etc/3proxy/.proxyauth
+	    output_proxy_list
             ;;
         6)
             # Xác nhận trước khi xóa cấu hình và cài đặt lại
@@ -151,14 +155,8 @@ chmod +x /usr/local/bin/menu
 echo "Khởi động 3proxy server"
 /etc/init.d/3proxy start
 
-# install zip
-sudo apt-get install zip -y
-
-# install jq
-sudo apt-get install jq -y
-
 # Tạo tệp proxy với định dạng IP:PORT:LOGIN:PASS từ file /etc/3proxy/.proxyauth
-gen_proxy_file_for_user() {
+output_proxy_list() {
     > proxy.txt  # Tạo hoặc làm trống tệp proxy.txt nếu nó đã tồn tại
     ports=(9999 8088)  # Mảng chứa các cổng sẽ xen kẽ
     hostname=$(hostname -I | awk '{print $1}')  # Lấy địa chỉ IP của server
@@ -173,40 +171,9 @@ gen_proxy_file_for_user() {
 
         port_index=$((i % 2))  # Lấy index cho cổng (0 hoặc 1 để xen kẽ giữa 9999 và 8088)
         port=${ports[$port_index]}  # Chọn cổng tương ứng
-        echo "$hostname:$port:$user:$password" >> proxy.txt  # Ghi vào file proxy.txt
+        echo "$hostname:$port:$user:$password" # xuất proxy ra console
         i=$((i + 1))  # Tăng bộ đếm để tiếp tục vòng lặp
     done < /etc/3proxy/.proxyauth
 }
 
-# Nén tệp proxy và upload lên download server
-upload_2file() {
-    local PASS=$(openssl rand -base64 12)  # Tạo mật khẩu ngẫu nhiên
-    zip --password "$PASS" proxy.zip proxy.txt
-    JSON=$(curl -F "file=@proxy.zip" https://file.io)
-    URL=$(echo "$JSON" | jq --raw-output '.link')
-
-    echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
-    echo "Download zip archive from: ${URL}"
-    echo "Password: ${PASS}"
-}
-
-# Xuất danh sách proxy ra console
-hostname=$(hostname -I | awk '{print $1}')
-ports=(9999 8088)  # Mảng chứa các cổng
-i=0
-echo "Proxy list (IP:PORT:LOGIN:PASS):"
-while IFS=: read -r user cl password; do
-    # Bỏ qua các dòng bắt đầu bằng dấu #
-    if [[ "$user" =~ ^# ]]; then
-        continue
-    fi
-
-    port_index=$((i % 2))  # Xen kẽ các port 9999 và 8088
-    port=${ports[$port_index]}
-    echo "$hostname:$port:$user:$password"
-    i=$((i + 1))
-done < /etc/3proxy/.proxyauth
-
-# Tạo và upload tệp proxy
-gen_proxy_file_for_user
-upload_2file
+output_proxy_list
