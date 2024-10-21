@@ -56,21 +56,23 @@ cat <<EOT > /usr/local/bin/menu
 # Định nghĩa hàm output_proxy_list
 output_proxy_list() {
     > proxy.txt  # Tạo hoặc làm trống tệp proxy.txt nếu nó đã tồn tại
-    ports=(9999 8088)  # Mảng chứa các cổng sẽ xen kẽ
-    hostname=\$(hostname -I | awk '{print \$1}')  # Lấy địa chỉ IP của server
+    ports=(9999 8088)  # Mảng chứa các cổng
+    types=("HTTP" "SOCKS5")  # Mảng chứa loại proxy tương ứng với cổng
+    hostname=$(hostname -I | awk '{print $1}')  # Lấy địa chỉ IP của server
 
     # Đọc file /etc/3proxy/.proxyauth để lấy danh sách user và password
-    i=0
     while IFS=: read -r user cl password; do
         # Bỏ qua các dòng bắt đầu bằng dấu #
-        if [[ "\$user" =~ ^# ]]; then
+        if [[ "$user" =~ ^# ]]; then
             continue
         fi
 
-        port_index=\$((i % 2))  # Lấy index cho cổng (0 hoặc 1 để xen kẽ giữa 9999 và 8088)
-        port=\${ports[\$port_index]}  # Chọn cổng tương ứng
-        echo "\$hostname:\$port:\$user:\$password"  # xuất proxy ra console
-        i=\$((i + 1))  # Tăng bộ đếm để tiếp tục vòng lặp
+        # Xuất ra 2 proxy cho mỗi username/password
+        for index in 0 1; do
+            port=${ports[$index]}  # Lấy cổng (9999 hoặc 8088)
+            type=${types[$index]}  # Lấy loại proxy (HTTP hoặc SOCKS5)
+            echo "$hostname:$port:$user:$password ($type)"  # xuất proxy ra console
+        done
     done < /etc/3proxy/.proxyauth
 }
 
