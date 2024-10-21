@@ -151,6 +151,12 @@ chmod +x /usr/local/bin/menu
 echo "Khởi động 3proxy server"
 /etc/init.d/3proxy start
 
+# install zip
+sudo apt-get install zip -y
+
+# install jq
+sudo apt-get install jq -y
+
 # Tạo tệp proxy với định dạng IP:PORT:LOGIN:PASS từ file /etc/3proxy/.proxyauth
 gen_proxy_file_for_user() {
     > proxy.txt  # Tạo hoặc làm trống tệp proxy.txt nếu nó đã tồn tại
@@ -159,21 +165,17 @@ gen_proxy_file_for_user() {
 
     # Đọc file /etc/3proxy/.proxyauth để lấy danh sách user và password
     i=0
-    while IFS=: read -r user password; do
+    while IFS=: read -r user cl password; do
+        # Bỏ qua các dòng bắt đầu bằng dấu #
+        if [[ "$user" =~ ^# ]]; then
+            continue
+        fi
+
         port_index=$((i % 2))  # Lấy index cho cổng (0 hoặc 1 để xen kẽ giữa 9999 và 8088)
         port=${ports[$port_index]}  # Chọn cổng tương ứng
-    	echo "$hostname:$port:$user:$password" # Xuất ra console
         echo "$hostname:$port:$user:$password" >> proxy.txt  # Ghi vào file proxy.txt
         i=$((i + 1))  # Tăng bộ đếm để tiếp tục vòng lặp
     done < /etc/3proxy/.proxyauth
-}
-
-install_zip_jq() {
-    # install zip
-    sudo apt-get install zip -y
-
-    # install jq
-    sudo apt-get install jq -y
 }
 
 # Nén tệp proxy và upload lên download server
@@ -188,6 +190,23 @@ upload_2file() {
     echo "Password: ${PASS}"
 }
 
+# Xuất danh sách proxy ra console
+hostname=$(hostname -I | awk '{print $1}')
+ports=(9999 8088)  # Mảng chứa các cổng
+i=0
+echo "Proxy list (IP:PORT:LOGIN:PASS):"
+while IFS=: read -r user cl password; do
+    # Bỏ qua các dòng bắt đầu bằng dấu #
+    if [[ "$user" =~ ^# ]]; then
+        continue
+    fi
+
+    port_index=$((i % 2))  # Xen kẽ các port 9999 và 8088
+    port=${ports[$port_index]}
+    echo "$hostname:$port:$user:$password"
+    i=$((i + 1))
+done < /etc/3proxy/.proxyauth
+
 # Tạo và upload tệp proxy
 gen_proxy_file_for_user
-install_zip_jq && upload_2file
+upload_2file
