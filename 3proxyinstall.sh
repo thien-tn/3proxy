@@ -1,5 +1,17 @@
 version=0.9.4
 
+# Check for bash shell
+if readlink /proc/$$/exe | grep -qs "dash"; then
+	echo "This script needs to be run with bash, not sh"
+	exit 1
+fi
+
+# Checking for root permission
+if [[ "$EUID" -ne 0 ]]; then
+	echo "Sorry, but you need to run this script as root"
+	exit 2
+fi
+
 # Cập nhật hệ thống và cài đặt các gói cần thiết
 apt-get update && apt-get -y upgrade
 apt-get install gcc make git -y
@@ -61,13 +73,13 @@ while true; do
         2)
             read -p "Nhập tên user mới: " user
             read -p "Nhập mật khẩu cho user: " password
-            echo "Thêm user \$user"
+            echo "Thêm user $user"
             # Lệnh thêm user theo format Username:CL:Password
-            echo "\$user:CL:\$password" >> /etc/3proxy/.proxyauth
+            echo "$user:CL:$password" >> /etc/3proxy/.proxyauth
             ;;
         3)
             read -p "Số lượng user muốn thêm ngẫu nhiên: " num
-            echo "Thêm \$num user ngẫu nhiên"
+            echo "Thêm $num user ngẫu nhiên"
             for i in $(seq 1 $num); do
                 # Tạo user ngẫu nhiên với 4 ký tự (gồm a-z, A-Z, 0-9)
                 user="usr_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)"
@@ -75,15 +87,15 @@ while true; do
                 # Tạo password ngẫu nhiên với 4 ký tự (gồm a-z, A-Z, 0-9)
                 password="pwd_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)"
                 
-                echo "Thêm user \$user với password \$password"
+                echo "Thêm user $user với password $password"
                 
                 # Lưu user và password theo format Username:CL:Password
-                echo "\$user:CL:\$password" >> /etc/3proxy/.proxyauth
+                echo "$user:CL:$password" >> /etc/3proxy/.proxyauth
             done
             ;;
         4)
             read -p "Nhập tên user cần xóa: " user
-            echo "Xóa user \$user"
+            echo "Xóa user $user"
             sed -i "/^\$user:/d" /etc/3proxy/.proxyauth
             ;;
         5)
