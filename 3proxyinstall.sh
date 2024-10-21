@@ -107,7 +107,7 @@ while true; do
         3)
             read -p "Số lượng user muốn thêm ngẫu nhiên: " num
             echo "Thêm \$num user ngẫu nhiên"
-            for i in \$(seq 1 \$num * 2); do
+            for i in \$(seq 1 \$num); do
                 # Tạo user ngẫu nhiên với 4 ký tự (gồm a-z, A-Z, 0-9)
                 user="usr_\$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)"
                 
