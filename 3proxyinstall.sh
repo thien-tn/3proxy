@@ -150,3 +150,45 @@ chmod +x /usr/local/bin/menu
 # Khởi động 3proxy server
 echo "Khởi động 3proxy server"
 /etc/init.d/3proxy start
+
+# Tạo tệp proxy với định dạng IP:PORT:LOGIN:PASS
+gen_proxy_file_for_user() {
+    # Sử dụng một vòng lặp thông thường và redirect đầu ra vào tệp proxy.txt
+    > proxy.txt  # Tạo hoặc làm trống tệp proxy.txt nếu nó đã tồn tại
+    for i in $(seq 1 $numofproxy); do
+        echo "$hostname:$port:${user[$i]}:${password[$i]}" >> proxy.txt
+    done
+}
+
+install_zip_jq() {
+    # install zip
+    sudo apt-get install zip -y
+
+    # install jq
+    sudo apt-get install jq -y
+}
+
+# Nén tệp proxy và upload lên download server
+upload_2file() {
+    local PASS=$(openssl rand -base64 12)  # Tạo mật khẩu ngẫu nhiên
+    zip --password "$PASS" proxy.zip proxy.txt
+    JSON=$(curl -F "file=@proxy.zip" https://file.io)
+    URL=$(echo "$JSON" | jq --raw-output '.link')
+
+    echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
+    echo "Download zip archive from: ${URL}"
+    echo "Password: ${PASS}"
+}
+
+# Output proxy list to console
+hostname=$(hostname -I | awk '{print $1}')
+echo "Proxy list (IP:PORT:LOGIN:PASS):"
+for i in $(seq 1 $numofproxy); do
+    if [[ -n "${user[$i]}" ]]; then
+        echo "$hostname:$port:${user[$i]}:${password[$i]}"
+    fi
+done
+
+# Tạo và upload tệp proxy
+gen_proxy_file_for_user
+install_zip_jq && upload_2file
