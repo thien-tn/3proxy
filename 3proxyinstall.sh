@@ -105,14 +105,12 @@ while true; do
         3)
             read -p "Số lượng user muốn thêm ngẫu nhiên: " num
             echo "Thêm \$num user ngẫu nhiên"
-            for i in \$(seq 1 \$num); do
+            for i in \$(seq 1 \$num * 2); do
                 # Tạo user ngẫu nhiên với 4 ký tự (gồm a-z, A-Z, 0-9)
                 user="usr_\$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)"
                 
                 # Tạo password ngẫu nhiên với 4 ký tự (gồm a-z, A-Z, 0-9)
                 password="pwd_\$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)"
-                
-                echo "Thêm user \$user với password \$password"
                 
                 # Lưu user và password theo format Username:CL:Password
                 echo "\$user:CL:\$password" >> /etc/3proxy/.proxyauth
