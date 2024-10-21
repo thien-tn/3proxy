@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 version=0.9.4
 
 # Check for bash shell
