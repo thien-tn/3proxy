@@ -7,9 +7,7 @@ A simple script to install 3proxy on Ubuntu/Debian
 
 Install :
 
-    wget --no-check-certificate https://raw.github.com/thien-tn/3proxy/master/3proxyinstall.sh
-    chmod +x 3proxyinstall.sh
-    ./3proxyinstall.sh
+    wget https://raw.github.com/thien-tn/3proxy/master/3proxyinstall.sh -O 3proxyinstall.sh && bash 3proxyinstall.sh
 
 Change authentication!!! 
 
@@ -32,9 +30,7 @@ Or
 	
 Uninstall:
 
-	wget --no-check-certificate https://raw.github.com/thien-tn/3proxy/master/3proxyuninstall.sh
-	chmod +x 3proxyuninstall.sh
-	./3proxyuninstall.sh
+ 	wget https://raw.github.com/thien-tn/3proxy/master/3proxyuninstall.sh -O 3proxyuninstall.sh && bash 3proxyuninstall.sh
 
 **Script tested on 04.06.2017 on EC2 AMI :**
 
