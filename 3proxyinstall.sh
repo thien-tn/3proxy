@@ -60,7 +60,7 @@ while true; do
     echo "3. Thêm ngẫu nhiên nhiều user"
     echo "4. Xóa 1 user"
     echo "5. Xóa toàn bộ user"
-    echo "6. Xóa toàn bộ cấu hình 3proxy"
+    echo "6. Cài đặt lại 3proxy server"
     echo "7. Khởi động lại 3proxy server"
     echo "8. Thoát"
     echo ""
@@ -105,11 +105,29 @@ while true; do
             > /etc/3proxy/.proxyauth
             ;;
         6)
-            echo "Xóa toàn bộ cấu hình 3proxy"
-            rm -rf /etc/3proxy
-            rm -rf /etc/init.d/3proxy
-            rm -rf /var/log/3proxy
-            grep -rl "3proxyinstall.sh" . | xargs rm -f
+            # Xác nhận trước khi xóa cấu hình và cài đặt lại
+            read -p "Bạn có chắc chắn muốn cài đặt lại 3proxy server? (y/n): " confirm
+            if [ "\$confirm" = "y" ] || [ "\$confirm" = "Y" ]; then
+                echo "Đang xóa cấu hình 3proxy..."
+                /etc/init.d/3proxy stop
+                rm -rf /etc/3proxy
+                rm -rf /var/log/3proxy
+                grep -rl "3proxyinstall.sh" . | xargs rm -f
+                rm /etc/rc0.d/*proxy
+                rm /etc/rc1.d/*proxy
+                rm /etc/rc6.d/*proxy
+                rm /etc/rc2.d/*proxy
+                rm /etc/rc3.d/*proxy
+                rm /etc/rc4.d/*proxy
+                rm /etc/rc5.d/*proxy
+                rm /etc/init.d/3proxy
+
+                # Tải xuống và cài đặt lại 3proxy
+                echo "Đang cài đặt lại 3proxy server..."
+                wget https://raw.github.com/thien-tn/3proxy/master/3proxyinstall.sh -O 3proxyinstall.sh && bash 3proxyinstall.sh
+            else
+                echo "Hủy bỏ cài đặt lại 3proxy server."
+            fi
             ;;
         7)
             echo "Khởi động lại 3proxy server"
