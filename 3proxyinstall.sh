@@ -151,13 +151,21 @@ chmod +x /usr/local/bin/menu
 echo "Khởi động 3proxy server"
 /etc/init.d/3proxy start
 
-# Tạo tệp proxy với định dạng IP:PORT:LOGIN:PASS
+# Tạo tệp proxy với định dạng IP:PORT:LOGIN:PASS từ file /etc/3proxy/.proxyauth
 gen_proxy_file_for_user() {
-    # Sử dụng một vòng lặp thông thường và redirect đầu ra vào tệp proxy.txt
     > proxy.txt  # Tạo hoặc làm trống tệp proxy.txt nếu nó đã tồn tại
-    for i in $(seq 1 $numofproxy); do
-        echo "$hostname:$port:${user[$i]}:${password[$i]}" >> proxy.txt
-    done
+    ports=(9999 8088)  # Mảng chứa các cổng sẽ xen kẽ
+    hostname=$(hostname -I | awk '{print $1}')  # Lấy địa chỉ IP của server
+
+    # Đọc file /etc/3proxy/.proxyauth để lấy danh sách user và password
+    i=0
+    while IFS=: read -r user password; do
+        port_index=$((i % 2))  # Lấy index cho cổng (0 hoặc 1 để xen kẽ giữa 9999 và 8088)
+        port=${ports[$port_index]}  # Chọn cổng tương ứng
+    	echo "$hostname:$port:$user:$password" # Xuất ra console
+        echo "$hostname:$port:$user:$password" >> proxy.txt  # Ghi vào file proxy.txt
+        i=$((i + 1))  # Tăng bộ đếm để tiếp tục vòng lặp
+    done < /etc/3proxy/.proxyauth
 }
 
 install_zip_jq() {
@@ -179,15 +187,6 @@ upload_2file() {
     echo "Download zip archive from: ${URL}"
     echo "Password: ${PASS}"
 }
-
-# Output proxy list to console
-hostname=$(hostname -I | awk '{print $1}')
-echo "Proxy list (IP:PORT:LOGIN:PASS):"
-for i in $(seq 1 $numofproxy); do
-    if [[ -n "${user[$i]}" ]]; then
-        echo "$hostname:$port:${user[$i]}:${password[$i]}"
-    fi
-done
 
 # Tạo và upload tệp proxy
 gen_proxy_file_for_user
