@@ -49,30 +49,31 @@ chmod +x /etc/init.d/3proxy
 # Thiết lập 3proxy để khởi động cùng hệ thống
 update-rc.d 3proxy defaults
 
-# Tạo tệp proxy với định dạng IP:PORT:LOGIN:PASS từ file /etc/3proxy/.proxyauth
+# Tạo file menu tự động
+cat <<EOT > /usr/local/bin/menu
+#!/usr/bin/env bash
+
+# Định nghĩa hàm output_proxy_list
 output_proxy_list() {
     > proxy.txt  # Tạo hoặc làm trống tệp proxy.txt nếu nó đã tồn tại
     ports=(9999 8088)  # Mảng chứa các cổng sẽ xen kẽ
-    hostname=$(hostname -I | awk '{print $1}')  # Lấy địa chỉ IP của server
+    hostname=\$(hostname -I | awk '{print \$1}')  # Lấy địa chỉ IP của server
 
     # Đọc file /etc/3proxy/.proxyauth để lấy danh sách user và password
     i=0
     while IFS=: read -r user cl password; do
         # Bỏ qua các dòng bắt đầu bằng dấu #
-        if [[ "$user" =~ ^# ]]; then
+        if [[ "\$user" =~ ^# ]]; then
             continue
         fi
 
-        port_index=$((i % 2))  # Lấy index cho cổng (0 hoặc 1 để xen kẽ giữa 9999 và 8088)
-        port=${ports[$port_index]}  # Chọn cổng tương ứng
-        echo "$hostname:$port:$user:$password" # xuất proxy ra console
-        i=$((i + 1))  # Tăng bộ đếm để tiếp tục vòng lặp
+        port_index=\$((i % 2))  # Lấy index cho cổng (0 hoặc 1 để xen kẽ giữa 9999 và 8088)
+        port=\${ports[\$port_index]}  # Chọn cổng tương ứng
+        echo "\$hostname:\$port:\$user:\$password"  # xuất proxy ra console
+        i=\$((i + 1))  # Tăng bộ đếm để tiếp tục vòng lặp
     done < /etc/3proxy/.proxyauth
 }
 
-# Tạo file menu tự động
-cat <<EOT > /usr/local/bin/menu
-#!/bin/bash
 while true; do
     echo ""
     echo "Chọn một tùy chọn từ menu:"
@@ -99,7 +100,7 @@ while true; do
             echo "Thêm user \$user"
             # Lệnh thêm user theo format Username:CL:Password
             echo "\$user:CL:\$password" >> /etc/3proxy/.proxyauth
-	    output_proxy_list
+            output_proxy_list
             ;;
         3)
             read -p "Số lượng user muốn thêm ngẫu nhiên: " num
@@ -116,18 +117,18 @@ while true; do
                 # Lưu user và password theo format Username:CL:Password
                 echo "\$user:CL:\$password" >> /etc/3proxy/.proxyauth
             done
-	    output_proxy_list
+            output_proxy_list
             ;;
         4)
             read -p "Nhập tên user cần xóa: " user
             echo "Xóa user \$user"
             sed -i "/^\$user:/d" /etc/3proxy/.proxyauth
-	    output_proxy_list
+            output_proxy_list
             ;;
         5)
             echo "Xóa toàn bộ user"
             > /etc/3proxy/.proxyauth
-	    output_proxy_list
+            output_proxy_list
             ;;
         6)
             # Xác nhận trước khi xóa cấu hình và cài đặt lại
@@ -175,6 +176,3 @@ chmod +x /usr/local/bin/menu
 # Khởi động 3proxy server
 echo "Khởi động 3proxy server"
 /etc/init.d/3proxy start
-
-
-output_proxy_list
